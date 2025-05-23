@@ -56,17 +56,6 @@ python3 xh.py ~/Downloads -s 300M
 
 ---
 
-## 📦 Installation
-
-### Clone the repo
-
-```bash
-git clone https://github.com/yourusername/xh-file-scanner.git
-cd xh-file-scanner
-```
-
----
-
 ## 📊 Sample Output
 
 ```text
