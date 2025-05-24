@@ -1,136 +1,155 @@
-# grouper.py
+"""
+grouper.py
+
+This module provides functions for grouping files by various hash strategies.
+Each function accepts a list of file dictionaries and returns a dictionary mapping
+hash keys to lists of matching files.
+
+Example file dict:
+    {
+        "path": "/path/to/file",
+        "size": 123456,
+        "full_hash": None or b'\x01\x02\x03..."
+    }
+"""
 
 from typing import List, Dict, Any, Callable
 from collections import defaultdict
-import os
 import hasher
 
 
-def group_files(file_paths: List[str], key_func: Callable[[str], Any]) -> Dict[Any, List[str]]:
+def group_files(
+        file_infos: List[Dict[str, Any]],
+        key_func: Callable[[Dict[str, Any]], Any]
+) -> Dict[Any, List[Dict[str, Any]]]:
     """
-    Groups file paths by a computed key.
+    Groups file info dicts by a computed key.
 
-    Parameters:
-        file_paths (List[str]): List of file paths
-        key_func (Callable): Function that returns a hashable key for each path
+    Args:
+        file_infos: List of file dicts with at least "path" and "size"
+        key_func: Function that takes a file dict and returns a hashable key
 
     Returns:
-        Dict[key, List[str]]: Dictionary mapping key → list of files with this key
+        Dict[key, List[file_dict]]
     """
     groups = defaultdict(list)
-    for path in file_paths:
+    for file_info in file_infos:
         try:
-            key = key_func(path)
+            key = key_func(file_info)
             if key is not None:
-                groups[key].append(path)
+                groups[key].append(file_info)
         except Exception as e:
-            print(f"⚠️ Error processing {path}: {e}")
+            print(f"⚠️ Error processing {file_info['path']}: {e}")
     return dict(groups)
 
 
-def group_by_size(files: List[Dict[str, Any]]) -> Dict[int, List[str]]:
+def group_by_size(file_infos: List[Dict[str, Any]]) -> Dict[int, List[Dict[str, Any]]]:
     """
     Groups files by size using precomputed 'size' field.
-    No need to re-read size from disk — it's already available.
-    
-    Parameters:
-        files (List[Dict]): List of file info dicts with 'size' and 'path' keys
-    
+
+    Args:
+        file_infos: List of file dicts with "size" and "path"
+
     Returns:
-        Dict[int, List[str]]: Dictionary mapping file size → list of matching files
+        Dict[size, List[file_dict]]
     """
     groups = defaultdict(list)
-    for file_info in files:
+    for file_info in file_infos:
         size = file_info["size"]
-        groups[size].append(file_info["path"])
+        groups[size].append(file_info)
     return dict(groups)
 
-
-def group_by_partial_hash(paths: List[str] ) -> Dict[bytes, List[str]]:
+def group_by_partial_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
     Groups files by hash of the first N bytes.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping partial hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_partial_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_partial_hash(file_info)
+
+    return group_files(file_infos, get_key)
 
 
-def group_by_end_hash(paths: List[str]) -> Dict[bytes, List[str]]:
+def group_by_end_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
     Groups files by hash of the last N bytes.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping end hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_end_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_end_hash(file_info)
+
+    return group_files(file_infos, get_key)
 
 
-def group_by_middle_hash(paths: List[str]) -> Dict[bytes, List[str]]:
+def group_by_middle_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
     Groups files by hash of the central N bytes.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping middle hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_middle_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_middle_hash(file_info)
+
+    return group_files(file_infos, get_key)
 
 
-def group_by_first_quarter_hash(paths: List[str]) -> Dict[bytes, List[str]]:
+def group_by_first_quarter_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
     Groups files by hash of the first 25% of the file.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_first_quarter_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_first_quarter_hash(file_info)
+
+    return group_files(file_infos, get_key)
 
 
-def group_by_third_quarter_hash(paths: List[str]) -> Dict[bytes, List[str]]:
+def group_by_third_quarter_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
-    Groups files by hash of the last 25% of the file.
+    Groups files by hash of the third quarter of the file.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_third_quarter_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_third_quarter_hash(file_info)
+
+    return group_files(file_infos, get_key)
 
 
-def group_by_full_hash(paths: List[str]) -> Dict[bytes, List[str]]:
+def group_by_full_hash(file_infos: List[Dict[str, Any]]) -> Dict[bytes, List[Dict[str, Any]]]:
     """
     Groups files by full content hash.
 
-    Parameters:
-        paths (List[str]): List of file paths
+    Args:
+        file_infos: List of file dicts
 
     Returns:
-        Dict[bytes, List[str]]: Dictionary mapping full hash → list of files
+        Dict[hash, List[file_dict]]
     """
-    def get_key(path):
-        return hasher.compute_full_hash(path)
-    return group_files(paths, get_key)
+    def get_key(file_info):
+        return hasher.compute_full_hash(file_info)
+
+    return group_files(file_infos, get_key)

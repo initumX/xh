@@ -1,52 +1,8 @@
 import os
 import sys
 import argparse
-import time
-from typing import List, Dict, Any, Callable, Optional
-from collections import defaultdict
 
-from core import (
-    scan_directory,
-    file_size_pass,
-    file_extension_pass,
-    sort_files_by_size_desc,
-)
-
-from grouper import (
-    group_by_size,
-    group_by_partial_hash,
-    group_by_end_hash,
-    group_by_middle_hash,
-    group_by_first_quarter_hash,
-    group_by_third_quarter_hash,
-    group_by_full_hash,
-)
-
-import deduplicator
-
-
-import hasher
-"""
-hasher provides the following functions:
-
-- `compute_partial_hash(path: str) -> Optional[bytes]`
-    Computes hash of the first N bytes of a file.
-
-- `compute_end_hash(path: str) -> Optional[bytes]`
-    Computes hash of the last N bytes of a file.
-
-- `compute_middle_hash(path: str) -> Optional[bytes]`
-    Computes hash of the central portion of a file.
-
-- `compute_first_quarter_hash(path: str) -> Optional[bytes]`
-    Computes hash around the first 25% of a file.
-
-- `compute_third_quarter_hash(path: str) -> Optional[bytes]`
-    Computes hash around the last 25% (third quarter) of a file.
-
-- `compute_full_hash(path: str) -> Optional[bytes]`
-    Computes full xxHash64 digest of an entire file.
-"""
+from core import scan_directory
 
 ENABLE_STATS = True  # Set to False to disable all stats
 

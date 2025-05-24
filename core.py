@@ -2,12 +2,12 @@
 import os
 import sys
 from typing import List, Dict, Any
-from collections import defaultdict
 
 
 def file_size_pass(size: int, min_size: int = None, max_size: int = None) -> bool:
     """
     Checks if a file's size is within the allowed range.
+    Always excludes zero-byte files.
 
     Parameters:
         size (int): File size in bytes
@@ -17,6 +17,8 @@ def file_size_pass(size: int, min_size: int = None, max_size: int = None) -> boo
     Returns:
         bool: True if file passes all size checks, False otherwise
     """
+    if size == 0:
+        return False # Skip blank files
     if min_size is not None and size < min_size:
         return False
     if max_size is not None and size > max_size:
@@ -139,7 +141,8 @@ def scan_directory(
             # Add file info to the list
             files.append({
                 'path': filepath,
-                'size': size
+                'size': size,
+                'full_hash': None # Will be set later if computed
             })
     
     files = sort_files_by_size_desc(files)
